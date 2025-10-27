@@ -15,6 +15,12 @@ class Ticket(models.Model):
         ('medium', 'Medium'),
         ('high', 'High')
     ]
+    STATUS_CHOICES = [
+        ('abierto', 'Abierto'),
+        ('en_curso', 'En curso'),
+        ('cerrado', 'Cerrado'),
+        ('en_espera', 'En espera'),
+    ]
 
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='tickets')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
@@ -28,6 +34,7 @@ class Ticket(models.Model):
     end_time = models.DateTimeField(blank=True, null=True)
     duration = models.DurationField(blank=True, null=True)
     report = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='en_espera')
 
     def __str__(self):
         return self.title
