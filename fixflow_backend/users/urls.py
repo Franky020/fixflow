@@ -8,4 +8,5 @@ router.register(r'users', UserViewSet, basename='user')
 router.register(r'login', TokenObtainPairView.as_view(serializer_class=Login), basename='login')
 
 
+
 urlpatterns = router.urls

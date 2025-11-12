@@ -52,3 +52,15 @@ class LogoutView(APIView):
                 {"error": f"Ocurrió un error al cerrar sesión: {str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+class RegisterDeviceTokenView(APIView):
+    def post(self, request):
+        user = request.user
+        token = request.data.get('device_token')
+
+        if not token:
+            return Response({"error": "Device token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.device_token = token
+        user.save()
+        return Response({"message": "Token saved successfully"}, status=status.HTTP_200_OK)

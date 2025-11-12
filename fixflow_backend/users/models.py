@@ -22,9 +22,10 @@ class User(AbstractUser, PermissionsMixin):
     user_type = models.CharField(max_length=15, choices=USER_TYPE_CHOICES, default='normal_user')
     age = models.IntegerField(blank=True, null=True)
     rfc = models.CharField(max_length=13, blank=True, null=True)
-    photo = models.CharField(max_length=255, blank=True, null=True)
+    photo = models.ImageField(upload_to='profiles_photos/', blank=True, null=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
+    device_token = models.CharField(max_length=255, blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

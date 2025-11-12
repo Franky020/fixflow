@@ -1,6 +1,6 @@
 from django.db import models
 from users.models import Company, User
-from locations.models import Location
+
 
 class Ticket(models.Model):
     CATEGORY_CHOICES = [
@@ -28,7 +28,8 @@ class Ticket(models.Model):
     description = models.TextField(blank=True, null=True)
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='none')
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='none')
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, blank=True, null=True, related_name='tickets')
+    # ✅ Solución: referencia por string
+    location = models.ForeignKey('locations.Location', on_delete=models.SET_NULL, blank=True, null=True, related_name='tickets')
     equipment = models.CharField(max_length=150, blank=True, null=True)
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)

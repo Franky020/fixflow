@@ -3,6 +3,7 @@ from .models import User  # Ajusta si tu modelo se llama distinto
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
+    photo = serializers.ImageField(required=False)
 
     class Meta:
         model = User
@@ -72,7 +73,9 @@ class Login(TokenObtainPairSerializer):
                 'rfc': user.rfc,
                 'status': user.status,
                 'company': user.company.id if user.company else None,
-                'photo': user.photo.url if user.photo else None,
+                'photo': (
+                    user.photo.url if user.photo else None
+                ),
             }
         })
         return data
