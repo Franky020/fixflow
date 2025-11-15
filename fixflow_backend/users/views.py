@@ -7,6 +7,7 @@ import json
 from .serializers import Login
 import logging
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.hashers import check_password
 from django.http import JsonResponse
 from rest_framework.decorators import action 
 from rest_framework.response import Response
@@ -24,6 +25,47 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def update_photo(self, request):
+        user = request.user
+        
+        if 'photo' not in request.FILES:
+            return Response({"error": "Se requiere una imagen."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        photo = request.FILES['photo']
+        user.photo = photo
+        user.save()
+
+        return Response({"message": "Foto actualizada correctamente",
+                         "photo_url": user.photo.url},
+                        status=status.HTTP_200_OK)
+    
+    def change_password(self, request):
+        user = request.user
+
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+
+        if not current_password or not new_password or not confirm_password:
+            return Response({"error": "Completa todos los campos."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if not check_password(current_password, user.password):
+            return Response({"error": "La contraseña actual es incorrecta."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if new_password != confirm_password:
+            return Response({"error": "Las contraseñas nuevas no coinciden."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"message": "Contraseña actualizada correctamente."},
+                        status=status.HTTP_200_OK)
+    
 class LoginView(TokenObtainPairView):
     serializer_class = Login
 
