@@ -68,3 +68,28 @@ class TicketViewSet(viewsets.ModelViewSet):
         result = {item['status']: item['total'] for item in counts}
     
         return Response(result, status=status.HTTP_200_OK)
+
+    # ---- CONTAR TICKETS DEL USUARIO EXCEPTO LOS CERRADOS ----
+    @action(detail=False, methods=['get'], url_path='count/open/(?P<user_id>\d+)')
+    def count_open(self, request, user_id=None):
+        total = Ticket.objects.filter(user_id=user_id).exclude(status="Cerrado").count()
+        return Response({
+            "user": user_id,
+            "tickets_abiertos_o_en_proceso": total
+        })
+    
+    @api_view(['GET'])
+    @permission_classes([IsAuthenticated])
+    def ticket_count_open_user(request):
+        user = request.user
+    
+        count = Ticket.objects.filter(
+            usuario=user
+        ).exclude(
+            estado="Cerrado"
+        ).count()
+    
+        return Response({
+            "usuario": user.id,
+            "tickets_abiertos_o_en_proceso": count
+        })
