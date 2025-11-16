@@ -14,6 +14,7 @@ from django.db.models import Count
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
+    permission_classes = [IsAuthenticated]
 
     def send_push_notification(token, title, body):
         # Crea la notificación
