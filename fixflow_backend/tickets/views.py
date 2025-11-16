@@ -54,7 +54,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         user = request.user  # Usuario autenticado
 
         # Ajusta según cómo defines los estados en tu modelo
-        estados = ["pendiente", "en_proceso", "cerrado", "cancelado"]
+        estados = ["abierto", "en_curso", "cerrado", "en_espera"]
 
         conteo = {}
 
