@@ -49,25 +49,20 @@ class TicketViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='count_by_status')
     def count_by_status(self, request):
-        user = request.user  # usuario logeado
+        user = request.user  # Usuario autenticado
+
+        # Ajusta según cómo defines los estados en tu modelo
+        estados = ["pendiente", "en_proceso", "cerrado", "cancelado"]
+
+        conteo = {}
+
+        for estado in estados:
+            conteo[estado] = Ticket.objects.filter(user=user, status=estado).count()
+
+        conteo["total"] = Ticket.objects.filter(user=user).count()
+
+        return Response(conteo, status=status.HTTP_200_OK)
     
-        # Filtrar solo tickets del usuario logeado
-        tickets = Ticket.objects.filter(user=user)
-    
-        # Agrupar y contar por estado
-        counts = tickets.values('status').annotate(total=Count('id'))
-    
-        # Si no tiene tickets
-        if not tickets.exists():
-            return Response(
-                {"message": "El usuario no tiene tickets."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-    
-        # Formato de respuesta amigable
-        result = {item['status']: item['total'] for item in counts}
-    
-        return Response(result, status=status.HTTP_200_OK)
 
     # ---- CONTAR TICKETS DEL USUARIO EXCEPTO LOS CERRADOS ----
     @action(detail=False, methods=['get'], url_path='count/open/(?P<user_id>\d+)')
@@ -78,18 +73,17 @@ class TicketViewSet(viewsets.ModelViewSet):
             "tickets_abiertos_o_en_proceso": total
         })
     
-    @api_view(['GET'])
-    @permission_classes([IsAuthenticated])
-    def ticket_count_open_user(request):
+    @action(detail=False, methods=['get'], url_path='count-open')
+    def ticket_count_open_user(self, request):
         user = request.user
-    
+
         count = Ticket.objects.filter(
             usuario=user
         ).exclude(
             estado="Cerrado"
         ).count()
-    
+
         return Response({
             "usuario": user.id,
             "tickets_abiertos_o_en_proceso": count
-        })
+        }, status=status.HTTP_200_OK)
