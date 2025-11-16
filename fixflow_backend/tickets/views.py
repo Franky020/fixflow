@@ -89,3 +89,12 @@ class TicketViewSet(viewsets.ModelViewSet):
             "usuario": user.id,
             "tickets_abiertos_o_en_proceso": count
         }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path="ticketsbyuserl")
+    def ticketsbyuser(self, request):
+        user = request.user  # Usuario logeado
+
+        tickets = Ticket.objects.filter(usuario=user)
+
+        serializer = self.get_serializer(tickets, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
