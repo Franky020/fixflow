@@ -8,6 +8,7 @@ class ReportMessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']  # Opcional
 
 class ReportSerializer(serializers.ModelSerializer):
+    ticket_title = serializers.CharField(source='ticket.title', read_only=True)
     messages = ReportMessageSerializer(many=True, read_only=True)
     class Meta:
         model = Report
