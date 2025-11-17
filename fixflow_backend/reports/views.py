@@ -43,6 +43,18 @@ class ReportViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['get'], url_path='messages')
+    def get_messages(self, request, pk=None):
+        try:
+            report = self.get_object()  # obtiene el reporte por ID
+        except Report.DoesNotExist:
+            return Response({"error": "Reporte no encontrado"}, status=404)
+
+        mensajes = report.messages.all()  # gracias al related_name="messages"
+
+        serializer = ReportMessageSerializer(mensajes, many=True)
+        return Response(serializer.data, status=200)
+
 
 class ReportMessageViewSet(viewsets.ModelViewSet):
     queryset = ReportMessage.objects.all()
