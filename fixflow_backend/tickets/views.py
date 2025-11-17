@@ -15,7 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def send_push_notification(token, title, body):
         # Crea la notificación
