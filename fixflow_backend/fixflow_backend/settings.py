@@ -111,3 +111,13 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+# Duración de Tokens JWT
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Token de acceso dura 60 min
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Refresh token dura 7 días
+    'ROTATE_REFRESH_TOKENS': True,                   # Genera nuevo refresh token al refrescar
+    'BLACKLIST_AFTER_ROTATION': True,                # El viejo refresh token se invalida
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
