@@ -94,7 +94,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     def ticketsbyuser(self, request):
         user = request.user  # Usuario logeado
 
-        tickets = Ticket.objects.filter(usuario=user)
+        tickets = Ticket.objects.filter(user=user)
 
         serializer = self.get_serializer(tickets, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
