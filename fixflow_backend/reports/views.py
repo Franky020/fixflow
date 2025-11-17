@@ -36,11 +36,10 @@ class ReportViewSet(viewsets.ModelViewSet):
         tickets_del_usuario = Ticket.objects.filter(user=user)
 
         # Luego buscamos los reportes ligados a esos tickets
-        reportes = Reporte.objects.filter(ticket__in=tickets_del_usuario)
+        reports = Report.objects.filter(ticket__in=tickets_del_usuario)
 
         # Serializamos
-        from .serializers import ReporteSerializer  # Ajusta si usas otro serializer
-        serializer = ReporteSerializer(reportes, many=True)
+        serializer = ReportSerializer(reports, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
