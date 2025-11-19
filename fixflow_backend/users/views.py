@@ -48,6 +48,7 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
     
+    @action(detail=False, methods=['post'], url_path='change_password')
     def change_password(self, request):
         user = request.user
 
