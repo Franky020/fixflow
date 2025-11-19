@@ -120,53 +120,89 @@ class TicketViewSet(viewsets.ModelViewSet):
             width, height = letter
             y = height - 50
     
-            # Título del PDF
-            p.setFont("Helvetica-Bold", 16)
+            # ---------------------------
+            # TÍTULO
+            # ---------------------------
+            p.setFont("Helvetica-Bold", 18)
             p.drawString(50, y, f"Reporte del Ticket #{ticket.id}")
             y -= 30
     
-            # Información del Ticket
+            # ---------------------------
+            # INFORMACIÓN DEL TICKET
+            # ---------------------------
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(50, y, "Información del Ticket")
+            y -= 20
+    
             p.setFont("Helvetica", 12)
-            p.drawString(50, y, f"Título: {ticket.titulo}")
-            y -= 20
-            p.drawString(50, y, f"Descripción: {ticket.descripcion}")
-            y -= 20
-            p.drawString(50, y, f"Estado: {ticket.estado}")
+            p.drawString(50, y, f"Título: {ticket.title}")
+            y -= 15
+            p.drawString(50, y, f"Descripción: {ticket.description or 'N/A'}")
+            y -= 15
+            p.drawString(50, y, f"Estado: {ticket.status}")
+            y -= 15
+            p.drawString(50, y, f"Categoría: {ticket.category}")
+            y -= 15
+            p.drawString(50, y, f"Prioridad: {ticket.priority}")
+            y -= 15
+    
+            if ticket.location:
+                p.drawString(50, y, f"Ubicación: {ticket.location.nombre}")
+                y -= 15
+    
+            p.drawString(50, y, f"Equipo: {ticket.equipment or 'N/A'}")
             y -= 30
     
-            # Loop por reportes
+            # ---------------------------
+            # REPORTES
+            # ---------------------------
             for rpt in reportes:
+            
+                if y < 100:
+                    p.showPage()
+                    y = height - 50
+    
                 p.setFont("Helvetica-Bold", 14)
-                p.drawString(50, y, f"Reporte #{rpt.id}")
-                y -= 20
+                p.drawString(50, y, f"Reporte #{rpt.id} - Fecha: {rpt.created_at}")
+                y -= 25
     
-                p.setFont("Helvetica", 12)
-                p.drawString(50, y, f"Descripción: {rpt.descripcion}")
-                y -= 20
-                p.drawString(50, y, f"Fecha: {rpt.fecha_creacion}")
-                y -= 20
-    
-                # Mensajes del reporte
-                mensajes = Message.objects.filter(reporte=rpt)
+                # ---------------------------
+                # MENSAJES DEL REPORTE
+                # ---------------------------
+                mensajes = ReportMessage.objects.filter(report=rpt)
     
                 p.setFont("Helvetica-Bold", 12)
                 p.drawString(50, y, "Mensajes:")
                 y -= 20
     
-                for msg in mensajes:
-                    if y < 80:
-                        p.showPage()
-                        y = height - 80
-    
+                if not mensajes.exists():
                     p.setFont("Helvetica", 11)
-                    p.drawString(70, y, f"- {msg.usuario.username}: {msg.texto}")
+                    p.drawString(70, y, "- Sin mensajes")
+                    y -= 20
+                    continue
+                
+                for msg in mensajes:
+                
+                    if y < 120:
+                        p.showPage()
+                        y = height - 50
+    
+                    # Texto del mensaje
+                    p.setFont("Helvetica", 11)
+                    p.drawString(70, y, f"- {msg.created_at}: {msg.message}")
                     y -= 15
     
-                y -= 15
+                    # Imagen si existe
+                    if msg.image:
+                        try:
+                            img_path = msg.image.path
+                            p.drawImage(img_path, 70, y - 120, width=150, height=120)
+                            y -= 140
+                        except Exception:
+                            p.drawString(70, y, "(Error al cargar imagen)")
+                            y -= 20
     
-                if y < 80:
-                    p.showPage()
-                    y = height - 80
+                    y -= 10
     
             p.showPage()
             p.save()
