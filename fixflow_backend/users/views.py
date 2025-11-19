@@ -16,6 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.hashers import check_password
 
 
 # Configuración de log
@@ -25,21 +26,27 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated], url_path='update-photo')
     def update_photo(self, request):
         user = request.user
-        
-        if 'photo' not in request.FILES:
-            return Response({"error": "Se requiere una imagen."},
-                            status=status.HTTP_400_BAD_REQUEST)
 
-        photo = request.FILES['photo']
+        if "photo" not in request.FILES:
+            return Response(
+                {"error": "Se requiere una imagen."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        photo = request.FILES["photo"]
         user.photo = photo
         user.save()
 
-        return Response({"message": "Foto actualizada correctamente",
-                         "photo_url": user.photo.url},
-                        status=status.HTTP_200_OK)
+        return Response(
+            {
+                "message": "Foto actualizada correctamente",
+                "photo_url": user.photo.url
+            },
+            status=status.HTTP_200_OK
+        )
     
     def change_password(self, request):
         user = request.user
@@ -49,22 +56,30 @@ class UserViewSet(viewsets.ModelViewSet):
         confirm_password = request.data.get("confirm_password")
 
         if not current_password or not new_password or not confirm_password:
-            return Response({"error": "Completa todos los campos."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Completa todos los campos."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not check_password(current_password, user.password):
-            return Response({"error": "La contraseña actual es incorrecta."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "La contraseña actual es incorrecta."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if new_password != confirm_password:
-            return Response({"error": "Las contraseñas nuevas no coinciden."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Las contraseñas nuevas no coinciden."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         user.set_password(new_password)
         user.save()
 
-        return Response({"message": "Contraseña actualizada correctamente."},
-                        status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Contraseña actualizada correctamente."},
+            status=status.HTTP_200_OK
+        )
     
 class LoginView(TokenObtainPairView):
     serializer_class = Login
