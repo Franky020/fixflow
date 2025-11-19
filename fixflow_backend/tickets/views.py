@@ -147,7 +147,7 @@ class TicketViewSet(viewsets.ModelViewSet):
             y -= 15
     
             if ticket.location:
-                p.drawString(50, y, f"Ubicación: {ticket.location.nombre}")
+                p.drawString(50, y, f"Ubicación: {ticket.location.name}")
                 y -= 15
     
             p.drawString(50, y, f"Equipo: {ticket.equipment or 'N/A'}")
