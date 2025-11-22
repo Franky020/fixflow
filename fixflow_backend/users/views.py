@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.hashers import check_password
+from users.permissions import CompanyAccessPermission
 
 
 # Configuración de log
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
+    permission_classes = [IsAuthenticated, CompanyAccessPermission]
     serializer_class = UserSerializer
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated], url_path='update-photo')
