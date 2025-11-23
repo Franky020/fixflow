@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = [IsAuthenticated, CompanyAccessPermission]
+    permission_classes = [CompanyAccessPermission]
     serializer_class = UserSerializer
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated], url_path='update-photo')
