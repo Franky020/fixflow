@@ -10,9 +10,27 @@ from tickets.permissions import CompanyAccessPermission
 from django.http import HttpResponse
 
 class ReportViewSet(viewsets.ModelViewSet):
-    queryset = Report.objects.all()
     serializer_class = ReportSerializer
     permission_classes = [CompanyAccessPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Super Admin ve todos
+        if user.user_type == "super_admin":
+            return Report.objects.all()
+        
+         # 2. Admin: Ve todos los reportes de su propia compañía
+        if user.user_type == "admin":
+            # Filtra los reportes a través de la relación 'ticket__company'
+            return Report.objects.filter(company=user.company)
+
+        if user.user_type == "normal_user":
+            # Filtra los reportes a través de la relación 'ticket__user'
+            return Report.objects.filter(user=user)
+            
+        # Caso por defecto
+        return Report.objects.none()
 
     @action(detail=True, methods=['post'], url_path='add-message')
     def add_message(self, request, pk=None):
@@ -185,5 +203,22 @@ class ReportViewSet(viewsets.ModelViewSet):
 
 
 class ReportMessageViewSet(viewsets.ModelViewSet):
-    queryset = ReportMessage.objects.all()
     serializer_class = ReportMessageSerializer
+    def get_queryset(self):
+        user = self.request.user
+
+        # Super Admin ve todos
+        if user.user_type == "super_admin":
+            return ReportMessage.objects.all()
+        
+         # 2. Admin: Ve todos los reportes de su propia compañía
+        if user.user_type == "admin":
+            # Filtra los reportes a través de la relación 'ticket__company'
+            return ReportMessage.objects.filter(company=user.company)
+
+        if user.user_type == "normal_user":
+            # Filtra los reportes a través de la relación 'ticket__user'
+            return ReportMessage.objects.filter(user=user)
+            
+        # Caso por defecto
+        return ReportMessage.objects.none()
