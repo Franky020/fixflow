@@ -15,11 +15,11 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'tickets', TicketViewSet, basename='ticket')
 router.register(r'satisfaction', CustomerSatisfactionViewSet, basename='satisfaction') 
-router.register(r'reports', ReportViewSet)
-router.register(r'companies', CompanyViewSet)
-router.register(r'locations', LocationViewSet)
+router.register(r'reports', ReportViewSet, basename='reports')
+router.register(r'companies', CompanyViewSet, basename='company')
+router.register(r'locations', LocationViewSet, basename='location')
 router.register(r'spare_parts', SparePartViewSet, basename='sparepart')
-router.register(r'report_messages', ReportMessageViewSet)
+router.register(r'report_messages', ReportMessageViewSet, basename='reportmessage')
 
 
 urlpatterns = [
