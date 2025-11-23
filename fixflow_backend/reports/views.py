@@ -14,22 +14,29 @@ class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [CompanyAccessPermission]
 
     def get_queryset(self):
+        """
+        Filtra los reportes:
+        - super_admin: Todos los reportes.
+        - admin: Reportes de su compañía.
+        - normal_user: Reportes de los tickets que él mismo creó.
+        """
         user = self.request.user
 
-        # Super Admin ve todos
+        # 1. Super Admin: Ve todos los reportes
         if user.user_type == "super_admin":
             return Report.objects.all()
-        
-         # 2. Admin: Ve todos los reportes de su propia compañía
-        if user.user_type == "admin":
-            # Filtra los reportes a través de la relación 'ticket__company'
-            return Report.objects.filter(company=user.company)
 
-        if user.user_type == "normal_user":
-            # Filtra los reportes a través de la relación 'ticket__user'
-            return Report.objects.filter(user=user)
+        # 2. Admin: Ve todos los reportes de su propia compañía
+        # Usamos ticket__company para filtrar por la compañía del ticket relacionado
+        if user.user_type == "admin":
+            return Report.objects.filter(ticket__company=user.company)
             
-        # Caso por defecto
+        # 3. Normal User: Solo ve los reportes de los tickets que él mismo ha creado
+        # Usamos ticket__user para filtrar por el usuario creador del ticket relacionado
+        if user.user_type == "normal_user":
+            return Report.objects.filter(ticket__user=user)
+            
+        # Caso por defecto (si no coincide con ningún user_type válido o no está logueado si se permite)
         return Report.objects.none()
 
     @action(detail=True, methods=['post'], url_path='add-message')
