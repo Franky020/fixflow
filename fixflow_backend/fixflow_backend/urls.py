@@ -18,7 +18,7 @@ router.register(r'satisfaction', CustomerSatisfactionViewSet, basename='satisfac
 router.register(r'reports', ReportViewSet)
 router.register(r'companies', CompanyViewSet)
 router.register(r'locations', LocationViewSet)
-router.register(r'spare_parts', SparePartViewSet)
+router.register(r'spare_parts', SparePartViewSet, basename='sparepart')
 router.register(r'report_messages', ReportMessageViewSet)
 
 
