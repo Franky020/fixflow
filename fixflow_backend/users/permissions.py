@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from django.db.models import Q
 
 class CompanyAccessPermission(BasePermission):
     """
@@ -13,10 +14,10 @@ class CompanyAccessPermission(BasePermission):
 
         # super_admin ve todo
         if user.user_type == "super_admin":
-            return True
+             queryset = user.objects.all()
 
         # objetos con compañía
-        if hasattr(obj, "company"):
-            return obj.company == user.company
+        else:
 
-        return False
+            queryset = user.obj.filter(company=user.company)
+            

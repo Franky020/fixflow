@@ -4,6 +4,8 @@ from .serializers import ReportSerializer, ReportMessageSerializer, AddReportMes
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from tickets.models import Ticket
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 from tickets.permissions import CompanyAccessPermission
 
 class ReportViewSet(viewsets.ModelViewSet):
@@ -55,6 +57,129 @@ class ReportViewSet(viewsets.ModelViewSet):
 
         serializer = ReportMessageSerializer(mensajes, many=True)
         return Response(serializer.data, status=200)
+    
+    @action(detail=True, methods=['get'], url_path='export-pdf')
+    def export_pdf(self, request, pk=None):
+        try:
+            # OBTENEMOS EL REPORTE ESPECÍFICO A TRAVÉS DE SU PK
+            reporte_base = self.get_object() 
+            ticket = reporte_base.ticket # Accedemos al Ticket relacionado
+            
+            # --- El resto de la lógica es similar, pero ahora centrada en el reporte_base ---
+
+            # Crear PDF en memoria
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="reporte_{reporte_base.id}_ticket_{ticket.id}.pdf"'
+    
+            p = canvas.Canvas(response, pagesize=letter)
+            width, height = letter
+            y = height - 50
+    
+            # ---------------------------
+            # TÍTULO
+            # ---------------------------
+            p.setFont("Helvetica-Bold", 18)
+            p.drawString(50, y, f"Reporte #{reporte_base.id} del Ticket #{ticket.id}")
+            y -= 30
+    
+            # ---------------------------
+            # INFORMACIÓN DEL TICKET Y USUARIO
+            # ---------------------------
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(50, y, "Información del Ticket")
+            y -= 20
+    
+            p.setFont("Helvetica", 12)
+            p.drawString(50, y, f"Título: {ticket.title}")
+            y -= 15
+            p.drawString(50, y, f"Descripción: {ticket.description or 'N/A'}")
+            y -= 15
+            p.drawString(50, y, f"Estado: {ticket.status}")
+            y -= 15
+            p.drawString(50, y, f"Prioridad: {ticket.priority}")
+            y -= 15
+            
+            # Información del usuario
+            p.drawString(50, y, f"Creado por: {ticket.user.get_full_name() or ticket.user.email}")
+            y -= 15
+
+            if ticket.location:
+                p.drawString(50, y, f"Ubicación: {ticket.location.name}")
+                y -= 15
+    
+            p.drawString(50, y, f"Equipo: {ticket.equipment or 'N/A'}")
+            y -= 30
+    
+            # ---------------------------
+            # CONTENIDO DEL REPORTE ESPECÍFICO
+            # ---------------------------
+            
+            # Solo iteramos sobre el reporte_base que acabamos de obtener
+            rpt = reporte_base
+        
+            if y < 100:
+                p.showPage()
+                y = height - 50
+
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(50, y, f"Reporte #{rpt.id} - Fecha: {rpt.created_at.strftime('%Y-%m-%d %H:%M')}")
+            y -= 25
+
+            # ---------------------------
+            # MENSAJES DEL REPORTE
+            # ---------------------------
+            mensajes = ReportMessage.objects.filter(report=rpt).order_by('created_at')
+
+            p.setFont("Helvetica-Bold", 12)
+            p.drawString(50, y, "Mensajes:")
+            y -= 20
+
+            if not mensajes.exists():
+                p.setFont("Helvetica", 11)
+                p.drawString(70, y, "- Sin mensajes")
+                y -= 20
+            
+            for msg in mensajes:
+            
+                if y < 120:
+                    p.showPage()
+                    y = height - 50
+
+                # Texto del mensaje
+                p.setFont("Helvetica", 11)
+                p.drawString(70, y, f"- {msg.created_at.strftime('%H:%M')}: {msg.message}")
+                y -= 15
+
+                # Imagen si existe
+                if msg.image:
+                    try:
+                        img_path = msg.image.path
+                        # Ajusta las dimensiones y la posición según sea necesario
+                        p.drawImage(img_path, 70, y - 120, width=150, height=120, preserveAspectRatio=True, anchor='n')
+                        y -= 140
+                    except Exception as img_e:
+                        p.drawString(70, y, "(Error al cargar imagen o ruta inaccesible)")
+                        y -= 20
+
+                y -= 10
+    
+            p.showPage()
+            p.save()
+    
+            return response
+    
+        except Report.DoesNotExist:
+            return Response(
+                {"error": "Reporte no encontrado."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            # Considera logging de errores más robusto aquí
+            return Response(
+                {"error": f"Ocurrió un error interno al generar el PDF: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 
 class ReportMessageViewSet(viewsets.ModelViewSet):
