@@ -12,6 +12,7 @@ from django.http import HttpResponse
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
+    permission_classes = [CompanyAccessPermission]
 
     @action(detail=True, methods=['post'], url_path='add-message')
     def add_message(self, request, pk=None):
