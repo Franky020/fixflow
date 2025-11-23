@@ -24,9 +24,19 @@ from users.permissions import CompanyAccessPermission
 logger = logging.getLogger(__name__)
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
     permission_classes = [CompanyAccessPermission]
     serializer_class = UserSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Super Admin ve todos
+        if user.user_type == "super_admin":
+            return User.objects.all()
+
+        # admin y normal_user → solo su empresa
+        return User.objects.filter(company=user.company)
+
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated], url_path='update-photo')
     def update_photo(self, request):
