@@ -4,6 +4,7 @@ from .serializers import ReportSerializer, ReportMessageSerializer, AddReportMes
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from tickets.models import Ticket
+from tickets.permissions import CompanyAccessPermission
 
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()

@@ -16,11 +16,12 @@ from reportlab.pdfgen import canvas
 from django.http import HttpResponse
 from reports.models import Report, ReportMessage
 from reportlab.lib.units import inch
+from tickets.permissions import CompanyAccessPermission
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [CompanyAccessPermission]
 
     def send_push_notification(token, title, body):
         # Crea la notificación

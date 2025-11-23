@@ -24,6 +24,7 @@ class User(AbstractUser, PermissionsMixin):
     rfc = models.CharField(max_length=13, blank=True, null=True)
     photo = models.ImageField(upload_to='profiles_photos/', blank=True, null=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     device_token = models.CharField(max_length=255, blank=True, null=True)
 
