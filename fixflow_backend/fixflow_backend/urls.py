@@ -11,7 +11,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
+router.register(r'users', UserViewSet, basename='user')
 router.register(r'tickets', TicketViewSet)
 router.register(r'reports', ReportViewSet)
 router.register(r'companies', CompanyViewSet)
