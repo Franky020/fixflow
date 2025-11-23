@@ -7,7 +7,7 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-2ruvr#e@b2&s(9c=a124rd6_9z3a4j4mxo#y7yx_dt_=zo=@&s')
-FIREBASE_CONFIG = json.loads(os.environ.get("FIREBASE_CONFIG"))
+# FIREBASE_CONFIG = json.loads(os.environ.get("FIREBASE_CONFIG"))
 
 DEBUG = True
 
@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'companies',
     'locations',
     'spare_parts',
+    'satisfaction',
 ]
 
 # Middleware (¡solo uno, el duplicado causaba tus errores!)
