@@ -23,6 +23,16 @@ class TicketViewSet(viewsets.ModelViewSet):
     serializer_class = TicketSerializer
     permission_classes = [CompanyAccessPermission]
 
+    def get_queryset(self):
+        user = self.request.user
+
+        # Super Admin ve todos
+        if user.user_type == "super_admin":
+            return User.objects.all()
+
+        # admin y normal_user → solo su empresa
+        return User.objects.filter(company=user.company)
+
     def send_push_notification(token, title, body):
         # Crea la notificación
         notification = messaging.Notification(
