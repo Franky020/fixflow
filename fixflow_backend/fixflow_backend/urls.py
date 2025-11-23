@@ -12,7 +12,7 @@ from django.conf.urls.static import static
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
-router.register(r'tickets', TicketViewSet)
+router.register(r'tickets', TicketViewSet, basename='ticket')
 router.register(r'reports', ReportViewSet)
 router.register(r'companies', CompanyViewSet)
 router.register(r'locations', LocationViewSet)

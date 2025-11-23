@@ -19,7 +19,6 @@ from reportlab.lib.units import inch
 from tickets.permissions import CompanyAccessPermission
 
 class TicketViewSet(viewsets.ModelViewSet):
-    queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
     permission_classes = [CompanyAccessPermission]
 
@@ -28,11 +27,19 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         # Super Admin ve todos
         if user.user_type == "super_admin":
-            return User.objects.all()
+            return Ticket.objects.all()
+        
+         # 2. Admin: Ve todos los reportes de su propia compañía
+        if user.user_type == "admin":
+            # Filtra los reportes a través de la relación 'ticket__company'
+            return Ticket.objects.filter(company=user.company)
 
-        # admin y normal_user → solo su empresa
-        return User.objects.filter(company=user.company)
-
+        if user.user_type == "normal_user":
+            # Filtra los reportes a través de la relación 'ticket__user'
+            return Ticket.objects.filter(user=user)
+            
+        # Caso por defecto
+        return Ticket.objects.none()
     def send_push_notification(token, title, body):
         # Crea la notificación
         notification = messaging.Notification(
