@@ -7,6 +7,7 @@ from tickets.models import Ticket
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from tickets.permissions import CompanyAccessPermission
+from django.http import HttpResponse
 
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()
