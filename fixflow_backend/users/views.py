@@ -71,7 +71,7 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
     
-        @action(detail=False, methods=['get'], url_path='user_type_counts')
+    @action(detail=False, methods=['get'], url_path='user_type_counts')
     def user_type_counts(self, request):
         """
         Calcula el conteo de usuarios por cada compañía y por tipo de usuario (user_type).
