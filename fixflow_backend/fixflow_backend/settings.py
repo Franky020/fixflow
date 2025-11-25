@@ -43,6 +43,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+     # AÑADIR ESTO INMEDIATAMENTE DESPUÉS DEL SECURITY MIDDLEWARE
+    'corsheaders.middleware.CorsMiddleware', 
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    # ... otros middlewares
 ]
 
 ROOT_URLCONF = 'fixflow_backend.urls'
@@ -112,6 +116,9 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 
 # Duración de Tokens JWT
 SIMPLE_JWT = {
