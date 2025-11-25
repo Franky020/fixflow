@@ -178,6 +178,57 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         # Retornar la respuesta usando Response de DRF (que maneja el formato JSON)
         return Response(response_data)
+    
+    @action(detail=False, methods=['get'], url_path='status-counts')
+    def ticket_status_counts(self, request):
+        """
+        Calcula el conteo de tickets agrupados por compañía y estado (status),
+        aplicando los filtros de seguridad definidos en get_queryset.
+
+        Endpoint sugerido: /api/tickets/status-counts/
+        """
+        
+        # 1. Obtener el QuerySet de tickets filtrado por permisos
+        ticket_queryset = self.get_queryset()
+
+        if ticket_queryset.model.objects is None:
+             return Response(
+                {"error": "El modelo Ticket no está disponible o la importación falló."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # 2. Query de Agregación: Agrupar por Compañía y Status
+        # Usamos el QuerySet ya filtrado (ticket_queryset)
+        ticket_counts = ticket_queryset.values(
+            'company__name',
+            'status'
+        ).annotate(
+            count=Count('id')
+        ).order_by('company__name', 'status')
+
+        # 3. Reestructurar el resultado para formato JSON
+        result = {}
+
+        for item in ticket_counts:
+            # Manejar el caso donde la compañía podría ser null
+            company_name = item.get('company__name', 'Tickets sin Compañía')
+            status_name = item['status']
+            count = item['count']
+
+            if company_name not in result:
+                result[company_name] = {
+                    'total_tickets': 0,
+                    'status_counts': {}
+                }
+
+            # Asignar el conteo al estado (status)
+            result[company_name]['status_counts'][status_name] = count
+            
+            # Acumular el conteo total de tickets para la compañía
+            result[company_name]['total_tickets'] += count
+
+        # 4. Retornar la respuesta
+        return Response(result)
 
     @action(detail=False, methods=['get'], url_path='user_ticket_counts')
     def user_ticket_counts(self, request):
