@@ -18,6 +18,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.hashers import check_password
 from users.permissions import CompanyAccessPermission
+from django.db.models import Count
+
 
 
 # Configuración de log
@@ -68,6 +70,53 @@ class UserViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK
         )
+    
+    @action(detail=False, methods=['get'], url_path='user_type_counts')
+    def user_type_counts(self, request):
+        """
+        Calcula el conteo de usuarios por cada compañía y por tipo de usuario (user_type).
+
+        Endpoint sugerido con DRF Router: /api/users/user_stats/user_type_counts/
+        """
+        
+        # 1. Query de Agregación
+        # Usamos el modelo User para contar.
+        user_counts = self.queryset.values(
+            # Agrupar por ID de compañía y nombre de compañía
+            'company_id', 
+            'company__name',
+            # Agrupar por tipo de usuario
+            'user_type'
+        ).annotate(
+            # Contar el número de usuarios en cada grupo
+            count=Count('id')
+        ).order_by('company__name', 'user_type')
+
+        # 2. Reestructurar el resultado para un formato más legible
+        # Transformamos la lista plana de resultados en un diccionario jerárquico.
+        result = {}
+        
+        for item in user_counts:
+            company_name = item['company__name']
+            user_type = item['user_type']
+            count = item['count']
+            
+            # Usar el nombre de la compañía como clave principal
+            if company_name not in result:
+                # Inicializar el diccionario de tipos de usuario para la nueva compañía
+                result[company_name] = {
+                    'total_users': 0, # Se añadirá el conteo total por compañía
+                    'roles': {}
+                }
+            
+            # Asignar el conteo al tipo de usuario (rol) dentro de la compañía
+            result[company_name]['roles'][user_type] = count
+            
+            # Acumular el conteo total de usuarios para la compañía
+            result[company_name]['total_users'] += count
+
+        # 3. Retornar la respuesta
+        return Response(result)
     
     @action(detail=False, methods=['post'], url_path='change_password')
     def change_password(self, request):
