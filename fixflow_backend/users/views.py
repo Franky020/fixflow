@@ -71,17 +71,18 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
     
-    @action(detail=False, methods=['get'], url_path='user_type_counts')
+        @action(detail=False, methods=['get'], url_path='user_type_counts')
     def user_type_counts(self, request):
         """
         Calcula el conteo de usuarios por cada compañía y por tipo de usuario (user_type).
-
-        Endpoint sugerido con DRF Router: /api/users/user_stats/user_type_counts/
+        Usa self.get_queryset() para garantizar la aplicación de permisos.
+        
+        Endpoint: /api/users/user_type_counts/
         """
         
         # 1. Query de Agregación
-        # Usamos el modelo User para contar.
-        user_counts = self.queryset.values(
+        # Se usa self.get_queryset() para obtener la lista de usuarios, aplicando la lógica de permisos.
+        user_counts = self.get_queryset().values( 
             # Agrupar por ID de compañía y nombre de compañía
             'company_id', 
             'company__name',
@@ -93,11 +94,19 @@ class UserViewSet(viewsets.ModelViewSet):
         ).order_by('company__name', 'user_type')
 
         # 2. Reestructurar el resultado para un formato más legible
-        # Transformamos la lista plana de resultados en un diccionario jerárquico.
         result = {}
         
         for item in user_counts:
-            company_name = item['company__name']
+            # Usar .get() para evitar errores si company_name fuera None por alguna razón
+            company_name = item.get('company__name', 'Sin Compañía Asignada')
+            
+            # Si el usuario es un Normal User, solo se ve a sí mismo, por lo que 
+            # company_name puede ser None si el campo no es obligatorio.
+            # Aquí asumimos que si no hay company_id, el nombre tampoco existe.
+            if not company_name and item['company_id'] is None:
+                company_name = "Usuarios sin Compañía"
+
+
             user_type = item['user_type']
             count = item['count']
             
@@ -105,7 +114,7 @@ class UserViewSet(viewsets.ModelViewSet):
             if company_name not in result:
                 # Inicializar el diccionario de tipos de usuario para la nueva compañía
                 result[company_name] = {
-                    'total_users': 0, # Se añadirá el conteo total por compañía
+                    'total_users': 0, 
                     'roles': {}
                 }
             
