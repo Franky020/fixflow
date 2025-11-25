@@ -2,6 +2,9 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from .models import Company
 from .serializers import CompanySerializer
+from django.db.models import Count
+from rest_framework.response import Response
+from rest_framework.decorators import action
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
