@@ -185,38 +185,50 @@ class TicketViewSet(viewsets.ModelViewSet):
         Cuenta los tickets no cerrados por usuario, filtrando solo los de la
         compañía del usuario logeado.
 
-        Endpoint: /api/companies/user_ticket_counts/
+        Endpoint sugerido con DRF Router: /api/tickets/stats/user_ticket_counts/
         """
-        # 1. Validación de usuario y compañía
-        user = request.user
-        if not user.is_authenticated:
-            return Response({'error': 'Authentication required.'}, status=401)
         
-        # Obtener el ID de la compañía del usuario logeado
-        # Esto asume que el modelo User tiene un campo de relación directa a Company (e.g., user.company_id)
+        # 1. Validación de Autenticación y Compañía
+        user = request.user
+        
+        # Verificar si el usuario está autenticado
+        if not user.is_authenticated:
+            return Response(
+                {'error': 'Authentication required.'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Obtener el ID de la compañía del usuario logeado de forma segura
         try:
+            # Opción A: Intenta acceder al ID directamente (si User tiene un campo company_id)
             user_company_id = user.company_id 
         except AttributeError:
-             # Fallback si el campo de la relación se llama 'company'
+             # Opción B: Intenta acceder al objeto Company y luego a su ID
             try:
-                user_company_id = user.company.id
+                if user.company:
+                    user_company_id = user.company.id
+                else:
+                    raise AttributeError("User is not associated with a company object.")
             except AttributeError:
                 # Si el usuario no tiene una compañía asociada, se devuelve un error.
-                return Response({'error': 'User is not associated with a company.'}, status=403)
+                return Response(
+                    {'error': 'User is not associated with a company.'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
 
         # 2. Query para contar tickets
         
         # Filtros: 
-        # a) company_id debe coincidir con la del usuario logeado.
-        # b) status no debe ser 'cerrado'.
-        ticket_counts = Ticket.objects.filter(
+        # a) company_id debe coincidir con la de la compañía del usuario logeado.
+        # b) status no debe ser 'cerrado' (usando el valor literal del STATUS_CHOICES).
+        ticket_counts = self.queryset.filter(
             company_id=user_company_id
         ).exclude(
-            status='cerrado'
+            status='cerrado' 
         ).values(
             # Agrupar por el usuario que creó el ticket, y obtener su nombre de usuario
-            # Usamos 'user' (FK field) y 'user__username' para información extra.
+            # Nota: 'user__username' asume que 'username' existe en el modelo User
             'user', 
             'user__username'
         ).annotate(
@@ -225,7 +237,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         ).order_by('-open_ticket_count')
 
         # 3. Retornar la respuesta
-        # DRF convierte el QuerySet resultante a JSON automáticamente.
+        # Convertimos el QuerySet a lista para asegurar el formato JSON
         return Response(list(ticket_counts))
     
     #Funcion para exportar ticket a PDF
