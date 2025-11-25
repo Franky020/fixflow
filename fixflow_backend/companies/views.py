@@ -3,11 +3,12 @@ from rest_framework import viewsets
 from .models import Company
 from .serializers import CompanySerializer
 
+
 class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='stats')
     def stats(self, request):
         """
         Calcula y retorna un conteo de compañías (excluyendo 'fixflow_internal'), 
