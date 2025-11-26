@@ -8,13 +8,32 @@ from rest_framework.response import Response
 from django.db.models import Count, Avg, Case, When, DecimalField # Importar Avg y Case
 from django.db.models.functions import Coalesce # Para manejar promedios nulos
 from tickets.models import Ticket # Necesario para filtrar tickets
+from satisfaction.permissions import CompanyAccessPermission
 
 class CustomerSatisfactionViewSet(viewsets.ModelViewSet):
-    queryset = CustomerSatisfaction.objects.all()
+    permission_classes = [CompanyAccessPermission]
     serializer_class = CustomerSatisfactionSerializer
     # Permite a cualquiera (incluso sin login) crear una calificación 
-    # si así lo requieres para un formulario público. Si solo es para usuarios logueados, usa IsAuthenticated.
-    permission_classes = [AllowAny] 
+    # si así lo requieres para un formulario público. Si solo es para usuarios logueados, usa IsAuthenticated
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Super Admin ve todos
+        if user.user_type == "super_admin":
+            return CustomerSatisfaction.objects.all()
+        
+         # 2. Admin: Ve todos los reportes de su propia compañía
+        if user.user_type == "admin":
+            # Filtra los reportes a través de la relación 'ticket__company'
+            return CustomerSatisfaction.objects.filter(ticket__company=user.company)
+
+        if user.user_type == "normal_user":
+            # Filtra los reportes a través de la relación 'ticket__user'
+            return CustomerSatisfaction.objects.filter(ticket__user=user)
+            
+        # Caso por defecto
+        return user.objects.none()
 
     @action(detail=False, methods=['get'], url_path='satisfaction-stats')
     def satisfaction_stats(self, request):
