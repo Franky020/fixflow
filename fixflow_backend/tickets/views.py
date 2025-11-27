@@ -89,7 +89,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='save_token')
     def save_token(self, request):
         user = request.user
-        token = request.data.get("device_token")
+        token = request.data.get("fcm_token")
 
 
         if not token:
