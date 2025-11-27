@@ -87,7 +87,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         # ... (Si no hay usuario asignado, no hace nada) ...
 
     @action(detail=False, methods=['post'], url_path='save_token')
-    def save_fcm_token(self, request):
+    def save_token(self, request):
         user = request.user
         token = request.data.get("device_token")
 
