@@ -22,6 +22,15 @@ class Ticket(models.Model):
         ('en_espera', 'En espera'),
     ]
 
+    assigned_user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        blank=True, 
+        null=True, 
+        related_name='assigned_tickets',
+        # Puedes añadir un related_name diferente si ya tienes 'tickets'
+    )
+    
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='tickets')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
     title = models.CharField(max_length=150)

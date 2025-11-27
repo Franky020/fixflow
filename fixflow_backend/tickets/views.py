@@ -4,7 +4,7 @@ from .models import Ticket
 from .serializers import TicketSerializer
 from django.conf import settings
 import requests
-from firebase_admin import messaging
+from firebase_admin import messaging, credentials
 from firebase_config import *
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,8 +18,29 @@ from reports.models import Report, ReportMessage
 from reportlab.lib.units import inch
 from tickets.permissions import CompanyAccessPermission
 from django.db.models import Count
+import firebase_admin
+from django.http import JsonResponse
 
+# Asegúrate de importar 'messaging' si no está importado fuera.
+def send_push_notification(token, title, body):
+    # Crea la notificación
+    notification = messaging.Notification(
+        title=title,
+        body=body
+    )
 
+    # Crea el mensaje
+    message = messaging.Message(
+        notification=notification,
+        token=token
+    )
+
+    try:
+        response = messaging.send(message)
+        print(f"✅ Notificación enviada correctamente: {response}")
+    except Exception as e:
+        # Aquí puedes agregar logging.error(f"Error al enviar notificación: {e}")
+        print(f"⚠️ Error al enviar notificación: {e}")
 class TicketViewSet(viewsets.ModelViewSet):
     serializer_class = TicketSerializer
     permission_classes = [CompanyAccessPermission]
@@ -42,24 +63,28 @@ class TicketViewSet(viewsets.ModelViewSet):
             
         # Caso por defecto
         return Ticket.objects.none()
-    def send_push_notification(token, title, body):
-        # Crea la notificación
-        notification = messaging.Notification(
-            title=title,
-            body=body
-        )
+    
+    def _check_and_send_assignment_notification(self, ticket_instance):
+        """Verifica el token y envía la notificación al usuario asignado."""
+        assigned_user = ticket_instance.assigned_user 
 
-        # Crea el mensaje
-        message = messaging.Message(
-            notification=notification,
-            token=token
-        )
+        if assigned_user:
+            # ⚠️ USAMOS 'device_token' del modelo User
+            assigned_user_token = assigned_user.device_token  
 
-        try:
-            response = messaging.send(message)
-            print(f"✅ Notificación enviada correctamente: {response}")
-        except Exception as e:
-            print(f"⚠️ Error al enviar notificación: {e}")
+            if assigned_user_token:
+                title = f"Ticket Asignado: #{ticket_instance.id}"
+                body = f"Se te ha asignado el ticket: '{ticket_instance.title}'."
+                
+                # Envío de la notificación
+                send_push_notification(
+                    token=assigned_user_token, # Usa el device_token
+                    title=title,
+                    body=body
+                )
+            else:
+                print(f"⚠️ Usuario asignado ({assigned_user.username}) no tiene un device_token registrado.")
+        # ... (Si no hay usuario asignado, no hace nada) ...
 
     @action(detail=False, methods=['get'], url_path='by_user/(?P<user_id>[^/.]+)')
     def by_user(self, request, user_id=None):
