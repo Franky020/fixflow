@@ -86,6 +86,19 @@ class TicketViewSet(viewsets.ModelViewSet):
                 print(f"⚠️ Usuario asignado ({assigned_user.username}) no tiene un device_token registrado.")
         # ... (Si no hay usuario asignado, no hace nada) ...
 
+    @action(detail=False, methods=['POST'], url_path='save_token')
+    def save_fcm_token(request):
+        user = request.user
+        token = request.data.get("device_token")
+
+        if not token:
+            return Response({"error": "Token requerido"}, status=400)
+
+        user.fcm_token = token
+        user.save()
+
+        return Response({"message": "Token guardado"}, status=200)
+
     @action(detail=False, methods=['get'], url_path='by_user/(?P<user_id>[^/.]+)')
     def by_user(self, request, user_id=None):
         tickets = Ticket.objects.filter(user_id=user_id)
