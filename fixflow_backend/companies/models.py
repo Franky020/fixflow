@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 class Company(models.Model):
     PLAN_CHOICES = [
@@ -13,7 +14,7 @@ class Company(models.Model):
     ]
 
     name = models.CharField(max_length=150)
-    logo = models.CharField(max_length=255, blank=True, null=True)
+    logo = CloudinaryField('foto', blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     contact = models.CharField(max_length=150, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
