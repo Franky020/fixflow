@@ -213,7 +213,7 @@ class ReportMessageViewSet(viewsets.ModelViewSet):
             return ReportMessage.objects.all()
         
          # 2. Admin: Ve todos los reportes de su propia compañía
-        if user.user_type == "admin":
+        if user.user_type == "admin" or user.user_type == "company_admin":
             # Filtra los reportes a través de la relación 'ticket__company'
             return ReportMessage.objects.filter(company=user.company)
 

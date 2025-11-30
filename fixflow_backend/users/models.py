@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db import models
 from companies.models import Company
+from cloudinary.models import CloudinaryField
 
 class User(AbstractUser, PermissionsMixin):
     USER_TYPE_CHOICES = [
@@ -22,7 +23,7 @@ class User(AbstractUser, PermissionsMixin):
     user_type = models.CharField(max_length=15, choices=USER_TYPE_CHOICES, default='normal_user')
     age = models.IntegerField(blank=True, null=True)
     rfc = models.CharField(max_length=13, blank=True, null=True)
-    photo = models.ImageField(upload_to='profiles_photos/', blank=True, null=True)
+    photo = CloudinaryField('foto', blank=True, null=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

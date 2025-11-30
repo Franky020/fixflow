@@ -3,6 +3,11 @@ import os
 import json
 from datetime import timedelta
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -31,6 +36,8 @@ INSTALLED_APPS = [
     'locations',
     'spare_parts',
     'satisfaction',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 # Middleware (¡solo uno, el duplicado causaba tus errores!)
@@ -104,7 +111,30 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Media files
-MEDIA_URL = '/media/'
+# Cloudinary (almacenamiento de imágenes)
+MEDIA_URL = 'https://res.cloudinary.com/dfdcovbqs/'
+
+# CLOUDINARY_URL = "cloudinary://922575117823414:VnRCEB7s0J5nX6iY95WN9MXLS-8@dfdcovbqs"
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dfdcovbqs',
+    'API_KEY': '922575117823414',
+    'API_SECRET': 'VnRCEB7s0J5nX6iY95WN9MXLS-8'
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+
+# cloudinary.config(
+#     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+#     api_key=os.getenv("CLOUDINARY_API_KEY"),
+#     api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+#     secure=True,
+# )
+cloudinary.config(
+    cloud_name = "dfdcovbqs",
+    api_key = "922575117823414",
+    api_secret = "VnRCEB7s0J5nX6iY95WN9MXLS-8",
+)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Modelo de usuario personalizado

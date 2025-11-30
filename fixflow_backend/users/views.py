@@ -33,7 +33,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Super Admin ve todos
-        if user.user_type == "super_admin":
+        if user.user_type == "super_admin ":
             return User.objects.all()
         
          # 2. Admin: Ve todos los reportes de su propia compañía
