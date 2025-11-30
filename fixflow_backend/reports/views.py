@@ -208,18 +208,20 @@ class ReportMessageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # Super Admin ve todos
+        # 1. Super Admin: Ve todos
         if user.user_type == "super_admin":
             return ReportMessage.objects.all()
         
-         # 2. Admin: Ve todos los reportes de su propia compañía
+        # 2. Admin: Ve todos los mensajes de reportes de su propia compañía
         if user.user_type == "admin":
-            # Filtra los reportes a través de la relación 'ticket__company'
-            return ReportMessage.objects.filter(ticket__company=user.company)
+            # 🟢 CORRECCIÓN: Filtra ReportMessage a través de la cadena report -> ticket -> company
+            return ReportMessage.objects.filter(report__ticket__company=user.company)
 
+        # 3. Normal User: Solo ve los mensajes de los reportes ligados a sus tickets
         if user.user_type == "normal_user":
-            # Filtra los reportes a través de la relación 'ticket__user'
-            return ReportMessage.objects.filter(Ticket_user=user)
+            # 🟢 CORRECCIÓN: Filtra ReportMessage a través de la cadena report -> ticket -> user
+            # Asumiendo que el campo 'user' en el modelo Ticket se llama 'user'.
+            return ReportMessage.objects.filter(report__ticket__user=user) 
             
         # Caso por defecto
         return ReportMessage.objects.none()
