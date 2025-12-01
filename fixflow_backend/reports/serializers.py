@@ -2,8 +2,8 @@ from rest_framework import serializers
 from .models import Report, ReportMessage  # Ajusta si tu modelo se llama distinto
 
 class ReportMessageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
     class Meta:
-        image = serializers.ImageField(required=False)
         model = ReportMessage
         fields = ['id', 'message', 'image', 'created_at']
         read_only_fields = ['created_at']  # Opcional
