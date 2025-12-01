@@ -22,25 +22,6 @@ import firebase_admin
 from django.http import JsonResponse
 
 # Asegúrate de importar 'messaging' si no está importado fuera.
-def send_push_notification(token, title, body):
-    # Crea la notificación
-    notification = messaging.Notification(
-        title=title,
-        body=body
-    )
-
-    # Crea el mensaje
-    message = messaging.Message(
-        notification=notification,
-        token=token
-    )
-
-    try:
-        response = messaging.send(message)
-        print(f"✅ Notificación enviada correctamente: {response}")
-    except Exception as e:
-        # Aquí puedes agregar logging.error(f"Error al enviar notificación: {e}")
-        print(f"⚠️ Error al enviar notificación: {e}")
 class TicketViewSet(viewsets.ModelViewSet):
     serializer_class = TicketSerializer
     permission_classes = [CompanyAccessPermission]
