@@ -16,7 +16,7 @@ class CompanyAccessPermission(BasePermission):
         if user.user_type == "super_admin":
             return True
 
-        elif hasattr(obj, "ticket") and hasattr(obj.ticket, "company"):
+        if hasattr(obj, "ticket") and hasattr(obj.ticket, "company"):
             object_company_id = obj.ticket.company_id
 
         # CASO 3: El objeto es un ReportMessage (Relación: ReportMessage -> Report -> Ticket -> Company)

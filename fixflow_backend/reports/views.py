@@ -12,7 +12,7 @@ from django.http import HttpResponse
 
 class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
-    permission_classes = [CompanyAccessPermission]
+    permission_classes = [IsAuthenticated] 
 
     def get_queryset(self):
         user = self.request.user
