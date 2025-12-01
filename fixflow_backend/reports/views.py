@@ -9,7 +9,13 @@ from reportlab.lib.pagesizes import letter
 from tickets.permissions import CompanyAccessPermission
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse
-
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
+from io import BytesIO
+import os
+import requests
 class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
     permission_classes = [IsAuthenticated] 
@@ -83,126 +89,155 @@ class ReportViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='export-pdf')
     def export_pdf(self, request, pk=None):
         try:
-            # OBTENEMOS EL REPORTE ESPECÍFICO A TRAVÉS DE SU PK
+            # 1. OBTENEMOS EL REPORTE ESPECÍFICO
             reporte_base = self.get_object() 
             ticket = reporte_base.ticket # Accedemos al Ticket relacionado
             
-            # --- El resto de la lógica es similar, pero ahora centrada en el reporte_base ---
-
-            # Crear PDF en memoria
+            # --- CONFIGURACIÓN DEL DOCUMENTO ---
             response = HttpResponse(content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="reporte_{reporte_base.id}_ticket_{ticket.id}.pdf"'
-    
-            p = canvas.Canvas(response, pagesize=letter)
-            width, height = letter
-            y = height - 50
-    
-            # ---------------------------
-            # TÍTULO
-            # ---------------------------
-            p.setFont("Helvetica-Bold", 18)
-            p.drawString(50, y, f"Reporte #{reporte_base.id} del Ticket #{ticket.id}")
-            y -= 30
-    
-            # ---------------------------
-            # INFORMACIÓN DEL TICKET Y USUARIO
-            # ---------------------------
-            p.setFont("Helvetica-Bold", 14)
-            p.drawString(50, y, "Información del Ticket")
-            y -= 20
-    
-            p.setFont("Helvetica", 12)
-            p.drawString(50, y, f"Título: {ticket.title}")
-            y -= 15
-            p.drawString(50, y, f"Descripción: {ticket.description or 'N/A'}")
-            y -= 15
-            p.drawString(50, y, f"Estado: {ticket.status}")
-            y -= 15
-            p.drawString(50, y, f"Prioridad: {ticket.priority}")
-            y -= 15
+
+            # Usar SimpleDocTemplate para estructura avanzada y auto-paginación
+            doc = SimpleDocTemplate(response, 
+                                    pagesize=letter, 
+                                    rightMargin=40, 
+                                    leftMargin=40, 
+                                    topMargin=60, 
+                                    bottomMargin=40)
+            elements = []
+
+            # --- ESTILOS ---
+            styles = getSampleStyleSheet()
+            style_normal = styles['Normal']
             
-            # Información del usuario
-            p.drawString(50, y, f"Creado por: {ticket.user.get_full_name() or ticket.user.email}")
-            y -= 15
+            style_title = ParagraphStyle(
+                'Title',
+                parent=styles['Title'],
+                alignment=2,  # Derecha
+                fontSize=18,
+                textColor=colors.HexColor("#076c77"), # Color principal
+                spaceAfter=6
+            )
+            # Título de sección centrado con fondo gris
+            style_box_title_centered = ParagraphStyle(
+                'BoxTitleCentered',
+                parent=styles['Heading3'],
+                backColor=colors.lightgrey,
+                textColor=colors.black,
+                fontSize=12,
+                spaceAfter=6,
+                spaceBefore=12,
+                alignment=1,  # Centrado
+            )
+            # Estilo para el contenido de las tablas (dentro de las celdas)
+            style_content = ParagraphStyle('Content', parent=style_normal, fontSize=10, leading=12)
 
-            if ticket.location:
-                p.drawString(50, y, f"Ubicación: {ticket.location.name}")
-                y -= 15
-    
-            p.drawString(50, y, f"Equipo: {ticket.equipment or 'N/A'}")
-            y -= 30
-    
-            # ---------------------------
-            # CONTENIDO DEL REPORTE ESPECÍFICO
-            # ---------------------------
+            # --- ENCABEZADO: LOGO Y TÍTULO ---
+            logo_path = os.path.join("static", "logo.png") # Ruta local para el logo
+            header_row = []
             
-            # Solo iteramos sobre el reporte_base que acabamos de obtener
-            rpt = reporte_base
-        
-            if y < 100:
-                p.showPage()
-                y = height - 50
+            # 1. Columna del Logo (Izquierda)
+            if os.path.exists(logo_path):
+                img = RLImage(logo_path, width=120, height=50)
+                img.hAlign = 'LEFT'
+                header_row.append(img)
+            else:
+                header_row.append(Paragraph("<b>[LOGO FALTANTE]</b>", style_normal))
 
-            p.setFont("Helvetica-Bold", 14)
-            p.drawString(50, y, f"Reporte #{rpt.id} - Fecha: {rpt.created_at.strftime('%Y-%m-%d %H:%M')}")
-            y -= 25
+            # 2. Columna del Título (Derecha)
+            ubicacion_nombre = getattr(ticket.location, 'name', 'N/A')
+            titulo_paragraph = Paragraph(f"<b>Reporte #{reporte_base.id}</b><br/><font size='10'>Ubicación: {ubicacion_nombre}</font>", style_title)
+            header_row.append(titulo_paragraph)
 
-            # ---------------------------
-            # MENSAJES DEL REPORTE
-            # ---------------------------
-            mensajes = ReportMessage.objects.filter(report=rpt).order_by('created_at')
+            header_table = Table([header_row], colWidths=[200, 300])
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('ALIGN', (1,0), (1,0), 'RIGHT'),
+            ]))
+            elements.append(header_table)
+            elements.append(Spacer(1, 12))
 
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(50, y, "Mensajes:")
-            y -= 20
+            # --- SECCIÓN: INFORMACIÓN DEL TICKET ---
+            elements.append(Paragraph("Información del Ticket", style_box_title_centered))
+
+            info_data = [
+                ['Título:', ticket.title],
+                ['Descripción:', ticket.description or 'N/A'],
+                ['Estado:', ticket.status],
+                ['Prioridad:', ticket.priority],
+                ['Creado por:', ticket.user.get_full_name() or ticket.user.email],
+                ['Equipo:', ticket.equipment or 'N/A'],
+            ]
+            info_table = Table(info_data, colWidths=[130, 350])
+            info_table.setStyle(TableStyle([
+                ('BOX', (0,0), (-1,-1), 1, colors.black),  # Borde completo
+                ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'), # Primera columna en negrita
+                ('FONTNAME', (1,0), (-1,-1), 'Helvetica'),
+                ('FONTSIZE', (0,0), (-1,-1), 10),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('LEFTPADDING', (0,0), (-1,-1), 6),
+            ]))
+            elements.append(info_table)
+            elements.append(Spacer(1, 12))
+
+            # --- SECCIÓN: MENSAJES Y EVIDENCIA ---
+            elements.append(Paragraph(f"Mensajes y Evidencia (Reporte #{reporte_base.id})", style_box_title_centered))
+            
+            mensajes = ReportMessage.objects.filter(report=reporte_base).order_by('created_at')
 
             if not mensajes.exists():
-                p.setFont("Helvetica", 11)
-                p.drawString(70, y, "- Sin mensajes")
-                y -= 20
+                elements.append(Paragraph("No hay mensajes asociados a este reporte.", style_content))
+            else:
+                for msg in mensajes:
+                    # 1. LÍNEA DE TEXTO (Fecha y Mensaje)
+                    fecha_msg = msg.created_at.strftime('%Y-%m-%d %H:%M')
+                    contenido_msg = msg.message if msg.message else "(Sin mensaje de texto)"
+                    
+                    elements.append(Paragraph(f"<b>[{fecha_msg}]</b>: {contenido_msg}", style_content))
+                    
+                    # 2. IMAGEN (Si existe) - Ahora usa la URL de Cloudinary
+                    if msg.image:
+                        try:
+                            # 🚨 CLAVE: Usamos .url en lugar de .path y descargamos
+                            img_url = msg.image.url 
+                            r = requests.get(img_url, stream=True)
+                            
+                            if r.status_code == 200:
+                                img_data = BytesIO(r.content)
+                                # Usamos RLImage con el buffer de datos
+                                rl_img = RLImage(img_data, width=200, height=150)
+                                rl_img.hAlign = 'CENTER' # Centramos la imagen
+                                elements.append(rl_img)
+                            else:
+                                elements.append(Paragraph(f"<i>(Error al descargar imagen: {r.status_code})</i>", style_content))
+                        except Exception as img_e:
+                            elements.append(Paragraph(f"<i>(Error al cargar imagen: {str(img_e)})</i>", style_content))
+
+                    elements.append(Spacer(1, 8)) # Espacio entre mensajes
+
+            # --- SECCIÓN: FIRMA Y FOOTER ---
+            elements.append(Spacer(1, 40))
+            elements.append(Paragraph("______________________________", style_normal))
+            elements.append(Paragraph("Firma", style_normal))
+            elements.append(Spacer(1, 12))
             
-            for msg in mensajes:
+            elements.append(Spacer(1, 40))
+            elements.append(Paragraph("FixFlow - Sistema de Gestión Técnica", style_normal))
             
-                if y < 120:
-                    p.showPage()
-                    y = height - 50
-
-                # Texto del mensaje
-                p.setFont("Helvetica", 11)
-                p.drawString(70, y, f"- {msg.created_at.strftime('%H:%M')}: {msg.message}")
-                y -= 15
-
-                # Imagen si existe
-                if msg.image:
-                    try:
-                        img_path = msg.image.path
-                        # Ajusta las dimensiones y la posición según sea necesario
-                        p.drawImage(img_path, 70, y - 120, width=150, height=120, preserveAspectRatio=True, anchor='n')
-                        y -= 140
-                    except Exception as img_e:
-                        p.drawString(70, y, "(Error al cargar imagen o ruta inaccesible)")
-                        y -= 20
-
-                y -= 10
-    
-            p.showPage()
-            p.save()
-    
+            # --- CONSTRUIR DOCUMENTO ---
+            doc.build(elements)
             return response
-    
+        
         except Report.DoesNotExist:
             return Response(
                 {"error": "Reporte no encontrado."},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
-            # Considera logging de errores más robusto aquí
             return Response(
                 {"error": f"Ocurrió un error interno al generar el PDF: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
 
 class ReportMessageViewSet(viewsets.ModelViewSet):
     # 1. PERMISOS: Solo permite el acceso a usuarios que han iniciado sesión.
