@@ -5,7 +5,7 @@ class ReportMessageSerializer(serializers.ModelSerializer):
     class Meta:
         image = serializers.ImageField(required=False)
         model = ReportMessage
-        fields = ['id', 'message', 'created_at']
+        fields = ['id', 'message', 'image', 'created_at']
         read_only_fields = ['created_at']  # Opcional
 
 class ReportSerializer(serializers.ModelSerializer):
