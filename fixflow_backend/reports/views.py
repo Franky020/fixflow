@@ -7,7 +7,7 @@ from tickets.models import Ticket
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from tickets.permissions import CompanyAccessPermission
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -133,7 +133,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             style_content = ParagraphStyle('Content', parent=style_normal, fontSize=10, leading=12)
 
             # --- ENCABEZADO: LOGO Y TÍTULO ---
-            logo_path = os.path.join("static", "logo.png") # Ruta local para el logo
+            logo_path = os.path.join("ImageField", "logo.png") # Ruta local para el logo
             header_row = []
             
             # 1. Columna del Logo (Izquierda)
@@ -242,7 +242,7 @@ class ReportViewSet(viewsets.ModelViewSet):
 class ReportMessageViewSet(viewsets.ModelViewSet):
     # 1. PERMISOS: Solo permite el acceso a usuarios que han iniciado sesión.
     # No aplica filtros de compañía o de objeto.
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [AllowAny] 
     
     serializer_class = ReportMessageSerializer
     queryset = ReportMessage.objects.all() # Todos los mensajes
