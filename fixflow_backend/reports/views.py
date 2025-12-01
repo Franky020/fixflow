@@ -7,6 +7,7 @@ from tickets.models import Ticket
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from tickets.permissions import CompanyAccessPermission
+from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse
 
 class ReportViewSet(viewsets.ModelViewSet):
@@ -204,25 +205,9 @@ class ReportViewSet(viewsets.ModelViewSet):
 
 
 class ReportMessageViewSet(viewsets.ModelViewSet):
+    # 1. PERMISOS: Solo permite el acceso a usuarios que han iniciado sesión.
+    # No aplica filtros de compañía o de objeto.
+    permission_classes = [IsAuthenticated] 
+    
     serializer_class = ReportMessageSerializer
-    permission_classes = [CompanyAccessPermission]
-    def get_queryset(self):
-        user = self.request.user
-
-        # 1. Super Admin: Ve todos
-        if user.user_type == "super_admin":
-            return ReportMessage.objects.all()
-        
-        # 2. Admin: Ve todos los mensajes de reportes de su propia compañía
-        if user.user_type == "admin":
-            # 🟢 CORRECCIÓN: Filtra ReportMessage a través de la cadena report -> ticket -> company
-            return ReportMessage.objects.filter(report__ticket__company=user.company)
-
-        # 3. Normal User: Solo ve los mensajes de los reportes ligados a sus tickets
-        if user.user_type == "normal_user":
-            # 🟢 CORRECCIÓN: Filtra ReportMessage a través de la cadena report -> ticket -> user
-            # Asumiendo que el campo 'user' en el modelo Ticket se llama 'user'.
-            return ReportMessage.objects.filter(report__ticket__user=user) 
-            
-        # Caso por defecto
-        return ReportMessage.objects.none()
+    queryset = ReportMessage.objects.all() # Todos los mensajes
