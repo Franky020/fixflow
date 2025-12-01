@@ -205,6 +205,7 @@ class ReportViewSet(viewsets.ModelViewSet):
 
 class ReportMessageViewSet(viewsets.ModelViewSet):
     serializer_class = ReportMessageSerializer
+    permission_classes = [CompanyAccessPermission]
     def get_queryset(self):
         user = self.request.user
 
