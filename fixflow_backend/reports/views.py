@@ -18,7 +18,7 @@ import os
 import requests
 class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [AllowAny] 
 
     def get_queryset(self):
         user = self.request.user
@@ -133,7 +133,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             style_content = ParagraphStyle('Content', parent=style_normal, fontSize=10, leading=12)
 
             # --- ENCABEZADO: LOGO Y TÍTULO ---
-            logo_path = os.path.join("ImageField", "logo.png") # Ruta local para el logo
+            logo_path = os.path.join("ImageField", "logo. ") # Ruta local para el logo
             header_row = []
             
             # 1. Columna del Logo (Izquierda)
